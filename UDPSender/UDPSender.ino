@@ -1,6 +1,16 @@
 /* Reads an LIS3DH accelerometer and sends  
  *  data out over 255.255.255.255
  *  Paul Badger 2017 
+ *  Data is formatted with an ID (one byte)
+ *  Colon character
+ *  Time Stamp (4 bytes)
+ *  Colon character 
+ *  X data two bytes 
+ *  Colon character  
+ *  Y data two bytes 
+ *  Colon character 
+ *  Z data two bytes 
+ *  Colon character 
  */
 
 #define waitTime (30)   // Set this for delay period in ms. As written, this is the minimum now
@@ -49,7 +59,7 @@ boolean sens1present = 0;
 ///////////////////////////////
 // Change these values for local configuration
 
-byte mac[] = { 0x90, 0xA2, 0xDA, 0x11, 0x09, 0x62 };  // Mac address must match Ethernet Arduino, marked on bottom
+byte mac[] = { 0x90, 0xA2, 0xDA, 0x11, 0x29, 0x00 };  // Mac address must match Ethernet Arduino, marked on bottom
 IPAddress myIP(169, 254, 158, 178);                     // IP address is hardcoded; change if on a different subnet or conflict
 unsigned int localPort = 80;                          // not used - local port to listen on:
 // our local config blocked most UDP so we chose 80 (usually http)
@@ -58,7 +68,7 @@ unsigned int localPort = 80;                          // not used - local port t
 
 // buffers for receiving and sending data
 char packetBuffer[UDP_TX_PACKET_MAX_SIZE];            //buffer to hold incoming packet,
-char  ReplyBuffer[40] = "----------------------------------------";       // a string to send back
+char  ReplyBuffer[30] = "------------------------------";       // a string to send back
 
 String accelValue = "";
 // An EthernetUDP instance to let us send and receive packets over UDP
@@ -72,7 +82,7 @@ int remPort = 35791;                 // agreed on email with Jason C
 
 ////////////////////////////////
 
-boolean start = false;
+boolean sensorStart = false;
 
 void setup() {
   Serial.begin(57600);
@@ -83,7 +93,7 @@ void setup() {
   }
   else {
     sens1present = true;
-    start = true;
+    sensorStart = true;
     Serial.println("Sensor1 found!");
   }
 
@@ -91,7 +101,16 @@ void setup() {
 
   // start the Ethernet and UDP:
   Serial.println("Set up ethernet... ");
-  Ethernet.begin(mac, myIP);
+
+  // start the Ethernet connection:
+  if (Ethernet.begin(mac) == 0) {
+    Serial.println("Failed to configure Ethernet using DHCP");
+    // no point in carrying on, so do nothing forevermore:
+    for (;;)
+      ;
+  }
+ 
+  // Ethernet.begin(mac, myIP);
   Udp.begin(localPort);
   printIPAddress();
 }
@@ -139,17 +158,30 @@ void loop() {
 
   */
 
-  if (start) {  // sensor is present
+  if (sensorStart) {  // sensor is present
 
     // Read sensor 1
 
     lis1.read();      // get X Y and Z data at once
-    accelValue = "1X:";
+    accelValue = "1:";
+    accelValue +=  millis();
+    accelValue += ":";
     accelValue +=  lis1.x;
-    accelValue +=  "Y:";
+    accelValue +=  ":";
     accelValue += lis1.y;
-    accelValue += "Z:";
+    accelValue += ":";
     accelValue += lis1.z;
+     }
+     else {   // no sensor found - send some -1's
+    accelValue = "1:";
+    accelValue +=  millis();
+    accelValue += ":";
+    accelValue +=  -1;
+    accelValue +=  ":";
+    accelValue += -1;
+    accelValue += ":";
+    accelValue += -1;    	
+     }
 
     // Convert the Arduino string to a char array
     accelValue.toCharArray(ReplyBuffer, 30);
@@ -160,8 +192,7 @@ void loop() {
     Udp.write(ReplyBuffer);
     Udp.endPacket();
     delay(30);
-
-  }
+ 
 }
 
 
