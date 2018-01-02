@@ -1,6 +1,6 @@
 /* Reads an LIS3DH accelerometer and sends  
  *  data out over 255.255.255.255
- *  Paul Badger 2017
+ *  Paul Badger 2017 
  */
 
 #define waitTime (30)   // Set this for delay period in ms. As written, this is the minimum now
