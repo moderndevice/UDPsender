@@ -32,10 +32,7 @@
 
 #define NO_INTERRUPT 1
 #define I2C_TIMEOUT 200
-#include <avr/io.h>
-// #include <SoftI2CMaster.h>
-
-
+//#include <avr/io.h>
 
 int16_t x, y, z;
 float x_g, y_g, z_g;
@@ -52,10 +49,13 @@ boolean sens1present = 0;
 
 ///////////////////////////////
 // Change these values for local configuration
+// Change the UNIT_ID, the last digit of the mac, and the last digit of the IP in unison
+// The spares have mac address E4 & E5 and IP 104 & 105
+// Spares take their UNIT_ID from a slide switch
 
 byte UNIT_ID = 1;  // set this for various pieces of exercise equipment, 1, 2, 3 currently valid
 byte mac[] = { 0x00, 0x01, 0x01, 0xAB, 0xCD, 0xE1 }; // 00:01:01:AB:CD:En Mac address     - Spares n = 4 & 5
-IPAddress myIP(192, 168, 2, 1 ); // 192.168.2.n  IP address is hardcoded - Spares n = 4 & 5
+IPAddress myIP(192, 168, 2, 101 ); // 192.168.2.10n (e.g. .101, .102, .103). - Spares n = 4 & 5
 unsigned int localPort = 80;   // not used - local port to listen on
 
 // our local config blocked most UDP so we chose 80 (usually http)
@@ -151,7 +151,7 @@ void loop() {
     accelValue += ":";
     accelValue += lis1.z;
   }
-  else {   // no sensor found - send dummy −32,768's
+  else {   // no sensor found - send dummy −32,767's
     accelValue = "1:";
     accelValue +=  millis();
     accelValue += ":";
