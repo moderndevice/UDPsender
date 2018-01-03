@@ -36,7 +36,6 @@
 // #include <SoftI2CMaster.h>
 
 
-byte UNIT_ID = 1;  // set this for various pieces of exercise equipment
 
 int16_t x, y, z;
 float x_g, y_g, z_g;
@@ -54,9 +53,11 @@ boolean sens1present = 0;
 ///////////////////////////////
 // Change these values for local configuration
 
-byte mac[] = { 0x90, 0xA2, 0xDA, 0x11, 0x29, 0x00 };  // Mac address must match Ethernet Arduino, marked on bottom
-IPAddress myIP(169, 254, 158, 178);                     // IP address is hardcoded; change if on a different subnet or conflict
-unsigned int localPort = 80;                          // not used - local port to listen on:
+byte UNIT_ID = 1;  // set this for various pieces of exercise equipment, 1, 2, 3 currently valid
+byte mac[] = { 0x00, 0x01, 0x01, 0xAB, 0xCD, 0xE1 }; // 00:01:01:AB:CD:En Mac address     - Spares n = 4 & 5
+IPAddress myIP(192, 168, 2, 1 ); // 192.168.2.n  IP address is hardcoded - Spares n = 4 & 5
+unsigned int localPort = 80;   // not used - local port to listen on
+
 // our local config blocked most UDP so we chose 80 (usually http)
 /////////////////////////////////
 
@@ -108,16 +109,17 @@ void setup() {
   // start the Ethernet and UDP:
   Serial.println("Set up ethernet... ");
 
-  // start the Ethernet connection:
-  if (Ethernet.begin(mac) == 0) {
-    // no point in carrying on, so do nothing forevermore:
-    while (1) {
-      Serial.println("Failed to configure Ethernet using DHCP");
-      delay(1000);
+  // start the Ethernet connection with DHCP:
+  /* if (Ethernet.begin(mac) == 0) {
+     // no point in carrying on, so do nothing forevermore:
+     while (1) {
+       Serial.println("Failed to configure Ethernet using DHCP");
+       delay(1000);
+     }
     }
-  }
+  */
 
-  // Ethernet.begin(mac, myIP);
+  Ethernet.begin(mac, myIP);
   Udp.begin(localPort);
   printIPAddress();
 }
