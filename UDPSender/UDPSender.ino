@@ -136,6 +136,7 @@ void printIPAddress()
 
 void loop() {
 
+
   if (sensorStart) {  // sensor is present, read sensor
     lis1.read();      // get X Y and Z data at once
     accelValue = UNIT_ID;
@@ -148,15 +149,15 @@ void loop() {
     accelValue += ":";
     accelValue += lis1.z;
   }
-  else {   // no sensor found - send dummy -1's
+  else {   // no sensor found - send dummy −32,768's
     accelValue = "1:";
     accelValue +=  millis();
     accelValue += ":";
-    accelValue +=  -1;
+    accelValue +=  -32767;
     accelValue +=  ":";
-    accelValue += -1;
+    accelValue += -32767;
     accelValue += ":";
-    accelValue += -1;
+    accelValue += -32767;
   }
 
   // Convert the Arduino string to a char array
@@ -167,7 +168,7 @@ void loop() {
   Udp.beginPacket(remIP, remPort);
   Udp.write(ReplyBuffer);
   Udp.endPacket();
-  delay(30);
+  delay(28);
 
 }
 
