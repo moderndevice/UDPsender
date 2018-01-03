@@ -1,17 +1,17 @@
-/* Reads an LIS3DH accelerometer and sends  
- *  data out over 255.255.255.255
- *  Paul Badger 2017 
- *  Data is formatted with an ID (one byte)
- *  Colon character
- *  Time Stamp (4 bytes)
- *  Colon character 
- *  X data two bytes 
- *  Colon character  
- *  Y data two bytes 
- *  Colon character 
- *  Z data two bytes 
- *  Colon character 
- */
+/* Reads an LIS3DH accelerometer and sends
+    data out over 255.255.255.255
+    Paul Badger 2017
+    Data is formatted with an ID (one byte)
+    Colon character
+    Time Stamp (4 bytes)
+    Colon character
+    X data two bytes
+    Colon character
+    Y data two bytes
+    Colon character
+    Z data two bytes
+    Colon character
+*/
 
 #define waitTime (30)   // Set this for delay period in ms. As written, this is the minimum now
 
@@ -23,7 +23,6 @@
 #include <Adafruit_LIS3DH.h>
 #include <Adafruit_Sensor.h>
 
-
 // Used for software SPI
 #define LIS3DH_CLK 13
 #define LIS3DH_MISO 12
@@ -33,15 +32,11 @@
 
 #define NO_INTERRUPT 1
 #define I2C_TIMEOUT 200
-
-#define SDA_PORT PORTD
-#define SDA_PIN 7
-#define SCL_PORT PORTD
-#define SCL_PIN 6
-
 #include <avr/io.h>
-#include <SoftI2CMaster.h>
+// #include <SoftI2CMaster.h>
 
+
+byte UNIT_ID = 1;  // set this for various pieces of exercise equipment
 
 int16_t x, y, z;
 float x_g, y_g, z_g;
@@ -87,14 +82,25 @@ boolean sensorStart = false;
 void setup() {
   Serial.begin(57600);
 
+  pinMode(3, INPUT_PULLUP);  // for three way switch on the spare
+  pinMode(4, INPUT_PULLUP);
+  pinMode(7, INPUT_PULLUP);
+  pinMode(5, OUTPUT);
+
+  if (!digitalRead(3)) UNIT_ID = 3; // if no switch present - no change in UNIT_ID
+  else if (!digitalRead(4)) UNIT_ID = 2;
+  else if (!digitalRead(7)) UNIT_ID = 1;
+
+  Serial.print("ID = ");
+  Serial.println(UNIT_ID);
 
   if (!lis1.begin(0x18)) {   // lis1
-    Serial.println("Sensor1 not present.");
+    Serial.println("Sensor not present.");
   }
   else {
     sens1present = true;
     sensorStart = true;
-    Serial.println("Sensor1 found!");
+    Serial.println("Sensor found!");
   }
 
   lis1.setRange(LIS3DH_RANGE_16_G);  // or use LIS3DH_RANGE_8_G, LIS3DH_RANGE_4_G, e
@@ -104,12 +110,13 @@ void setup() {
 
   // start the Ethernet connection:
   if (Ethernet.begin(mac) == 0) {
-    Serial.println("Failed to configure Ethernet using DHCP");
     // no point in carrying on, so do nothing forevermore:
-    for (;;)
-      ;
+    while (1) {
+      Serial.println("Failed to configure Ethernet using DHCP");
+      delay(1000);
+    }
   }
- 
+
   // Ethernet.begin(mac, myIP);
   Udp.begin(localPort);
   printIPAddress();
@@ -124,46 +131,15 @@ void printIPAddress()
     Serial.print(Ethernet.localIP()[thisByte], DEC);
     Serial.print(".");
   }
-
   Serial.println();
-
-
 }
 
 void loop() {
 
-  /*
-      This code waits for an UDP packet, then sends to that address
-      Inst
-
-    // if there's data available, read a packet
-    int packetSize = Udp.parsePacket();
-
-    if ((packetSize) && !(start)) {
-     // Received a message over UDP; save the remoteIP and port
-     start = true;
-     Serial.print("Received start from ");
-     remIP = Udp.remoteIP();
-     for (int i = 0; i < 4; i++) {
-       Serial.print(remIP[i], DEC);
-       if (i < 3) {
-         Serial.print(".");
-       }
-     }
-     remPort = Udp.remotePort();
-     Serial.print(", port ");
-     Serial.println(remPort);
-    }
-    delay(10);
-
-  */
-
-  if (sensorStart) {  // sensor is present
-
-    // Read sensor 1
-
+  if (sensorStart) {  // sensor is present, read sensor
     lis1.read();      // get X Y and Z data at once
-    accelValue = "1:";
+    accelValue = UNIT_ID;
+    accelValue += ":";
     accelValue +=  millis();
     accelValue += ":";
     accelValue +=  lis1.x;
@@ -171,8 +147,8 @@ void loop() {
     accelValue += lis1.y;
     accelValue += ":";
     accelValue += lis1.z;
-     }
-     else {   // no sensor found - send some -1's
+  }
+  else {   // no sensor found - send dummy -1's
     accelValue = "1:";
     accelValue +=  millis();
     accelValue += ":";
@@ -180,19 +156,19 @@ void loop() {
     accelValue +=  ":";
     accelValue += -1;
     accelValue += ":";
-    accelValue += -1;    	
-     }
+    accelValue += -1;
+  }
 
-    // Convert the Arduino string to a char array
-    accelValue.toCharArray(ReplyBuffer, 30);
-    Serial.println(ReplyBuffer);
+  // Convert the Arduino string to a char array
+  accelValue.toCharArray(ReplyBuffer, 30);
+  Serial.println(ReplyBuffer);
 
-    // Send it
-    Udp.beginPacket(remIP, remPort);
-    Udp.write(ReplyBuffer);
-    Udp.endPacket();
-    delay(30);
- 
+  // Send it
+  Udp.beginPacket(remIP, remPort);
+  Udp.write(ReplyBuffer);
+  Udp.endPacket();
+  delay(30);
+
 }
 
 
