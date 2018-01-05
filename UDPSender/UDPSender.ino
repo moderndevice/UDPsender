@@ -1,17 +1,26 @@
-/* Reads an LIS3DH accelerometer and sends
-    data out over 255.255.255.255
-    Paul Badger 2017
-    Data is formatted with an ID (one byte)
-    Colon character
-    Time Stamp (4 bytes)
-    Colon character
-    X data two bytes
-    Colon character
-    Y data two bytes
-    Colon character
-    Z data two bytes
-    Colon character
+/* Dependencies:
+
+     Adafruit LIS3DH
+     Adafruit Unified Sensor
+
+   Created By:
+     
+     Paul Badger 2017
+   
+   Description:
+     
+     Reads an LIS3DH accelerometer and sends UDP data out to 255.255.255.255:35791
+
+     One datagram = one sample, data is text, formatted as:
+
+       id:timestamp:x:y:z
+
+     If sensor is missing, x y and z will be -32767.
 */
+
+// determines unit id, ip address, and mac address; valid range 1-154. use 100+ for spares with switches.
+// current spare unit is 100. second spare should be 101.
+#define SENSOR_DEVICE_ID 1
 
 #define waitTime (30)   // Set this for delay period in ms. As written, this is the minimum now
 
@@ -49,13 +58,12 @@ boolean sens1present = 0;
 
 ///////////////////////////////
 // Change these values for local configuration
-// Change the UNIT_ID, the last digit of the mac, and the last digit of the IP in unison
-// The spares have mac address E4 & E5 and IP 104 & 105
+// Change SENSOR_DEVICE_ID above to set mac, ip, and initial unit id (overwritten for units with switch)
 // Spares take their UNIT_ID from a slide switch
 
-byte UNIT_ID = 1;  // set this for various pieces of exercise equipment, 1, 2, 3 currently valid
-byte mac[] = { 0x00, 0x01, 0x01, 0xAB, 0xCD, 0xE1 }; // 00:01:01:AB:CD:En Mac address     - Spares n = 4 & 5
-IPAddress myIP(192, 168, 2, 101 ); // 192.168.2.10n (e.g. .101, .102, .103). - Spares n = 4 & 5
+byte UNIT_ID = SENSOR_DEVICE_ID;  // set this for various pieces of exercise equipment, 1, 2, 3 currently valid
+byte mac[] = { 0x00, 0x01, 0x01, 0xAB, 0xCD, SENSOR_DEVICE_ID }; // 00:01:01:AB:CD:nn Mac address     - Spares n = 100+
+IPAddress myIP(10, 0, 2, 100 + SENSOR_DEVICE_ID ); // 10.0.2.[100+n] (e.g. .101, .102, .103). - Spares n = 100+
 unsigned int localPort = 80;   // not used - local port to listen on
 
 // our local config blocked most UDP so we chose 80 (usually http)
@@ -64,7 +72,7 @@ unsigned int localPort = 80;   // not used - local port to listen on
 
 // buffers for receiving and sending data
 char packetBuffer[UDP_TX_PACKET_MAX_SIZE];            //buffer to hold incoming packet,
-char  ReplyBuffer[30] = "------------------------------";       // a string to send back
+char ReplyBuffer[64] = {0};       // a string to send back
 
 String accelValue = "";
 // An EthernetUDP instance to let us send and receive packets over UDP
@@ -104,7 +112,7 @@ void setup() {
     Serial.println("Sensor found!");
   }
 
-  lis1.setRange(LIS3DH_RANGE_16_G);  // or use LIS3DH_RANGE_8_G, LIS3DH_RANGE_4_G, e
+  lis1.setRange(LIS3DH_RANGE_4_G);  // or use LIS3DH_RANGE_8_G, LIS3DH_RANGE_16_G, e
 
   // start the Ethernet and UDP:
   Serial.println("Set up ethernet... ");
@@ -145,17 +153,18 @@ void loop() {
     accelValue += ":";
     accelValue +=  millis();
     accelValue += ":";
-    accelValue +=  lis1.x;
+    accelValue += lis1.x;
     accelValue +=  ":";
     accelValue += lis1.y;
     accelValue += ":";
     accelValue += lis1.z;
   }
   else {   // no sensor found - send dummy −32,767's
-    accelValue = "1:";
+    accelValue = UNIT_ID;
+    accelValue += ":";
     accelValue +=  millis();
     accelValue += ":";
-    accelValue +=  -32767;
+    accelValue += -32767;
     accelValue +=  ":";
     accelValue += -32767;
     accelValue += ":";
@@ -163,7 +172,7 @@ void loop() {
   }
 
   // Convert the Arduino string to a char array
-  accelValue.toCharArray(ReplyBuffer, 30);
+  accelValue.toCharArray(ReplyBuffer, sizeof(ReplyBuffer));
   Serial.println(ReplyBuffer);
 
   // Send it
