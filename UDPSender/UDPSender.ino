@@ -18,6 +18,9 @@
      If sensor is missing, x y and z will be -32767.
 */
 
+// determines unit id, ip address, and mac address. use 4 for the one with the switch.
+#define SENSOR_DEVICE_ID 1
+
 #define waitTime (30)   // Set this for delay period in ms. As written, this is the minimum now
 
 #include <SPI.h>
@@ -58,9 +61,9 @@ boolean sens1present = 0;
 // The spares have mac address E4 & E5 and IP 104 & 105
 // Spares take their UNIT_ID from a slide switch
 
-byte UNIT_ID = 1;  // set this for various pieces of exercise equipment, 1, 2, 3 currently valid
-byte mac[] = { 0x00, 0x01, 0x01, 0xAB, 0xCD, 0xE1 }; // 00:01:01:AB:CD:En Mac address     - Spares n = 4 & 5
-IPAddress myIP(10, 0, 2, 101 ); // 10.0.2.10n (e.g. .101, .102, .103). - Spares n = 4 & 5
+byte UNIT_ID = SENSOR_DEVICE_ID;  // set this for various pieces of exercise equipment, 1, 2, 3 currently valid
+byte mac[] = { 0x00, 0x01, 0x01, 0xAB, 0xCD, 0xE0 + SENSOR_DEVICE_ID }; // 00:01:01:AB:CD:En Mac address     - Spares n = 4 & 5
+IPAddress myIP(10, 0, 2, 100 + SENSOR_DEVICE_ID ); // 10.0.2.10n (e.g. .101, .102, .103). - Spares n = 4 & 5
 unsigned int localPort = 80;   // not used - local port to listen on
 
 // our local config blocked most UDP so we chose 80 (usually http)
