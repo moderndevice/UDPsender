@@ -20,7 +20,7 @@
        id:timestamp
 
      Where id is an integer, timestamp is an integer number of milliseconds, and x y z are
-     decimals in g units. If sensor is missing, x y and z won't be sent:
+     decimals in g units. If sensor is missing, x y and z won't be sent.
 */
 
 // determines unit id, ip address, and mac address; valid range 1-154. use 100+ for spares with switches.
