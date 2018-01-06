@@ -15,7 +15,12 @@
 
        id:timestamp:x:y:z
 
-     If sensor is missing, x y and z will be -32767.
+     Or, if the sensor is missing:
+
+       id:timestamp
+
+     Where id is an integer, timestamp is an integer number of milliseconds, and x y z are
+     decimals in g units. If sensor is missing, x y and z won't be sent:
 */
 
 // determines unit id, ip address, and mac address; valid range 1-154. use 100+ for spares with switches.
@@ -72,7 +77,6 @@ unsigned int localPort = 80;   // not used - local port to listen on
 
 // buffers for receiving and sending data
 char packetBuffer[UDP_TX_PACKET_MAX_SIZE];            //buffer to hold incoming packet,
-char ReplyBuffer[64] = {0};       // a string to send back
 
 String accelValue = "";
 // An EthernetUDP instance to let us send and receive packets over UDP
@@ -113,6 +117,7 @@ void setup() {
   }
 
   lis1.setRange(LIS3DH_RANGE_4_G);  // or use LIS3DH_RANGE_8_G, LIS3DH_RANGE_16_G, e
+#define SENSOR_RANGE_IN_G 4.0      // set this to match the above!
 
   // start the Ethernet and UDP:
   Serial.println("Set up ethernet... ");
@@ -153,31 +158,23 @@ void loop() {
     accelValue += ":";
     accelValue +=  millis();
     accelValue += ":";
-    accelValue += lis1.x;
-    accelValue +=  ":";
-    accelValue += lis1.y;
+    accelValue += String(SENSOR_RANGE_IN_G * (double)lis1.x / 32767.0, 6);
     accelValue += ":";
-    accelValue += lis1.z;
+    accelValue += String(SENSOR_RANGE_IN_G * (double)lis1.y / 32767.0, 6);
+    accelValue += ":";
+    accelValue += String(SENSOR_RANGE_IN_G * (double)lis1.z / 32767.0, 6);
   }
   else {   // no sensor found - send dummy −32,767's
     accelValue = UNIT_ID;
     accelValue += ":";
-    accelValue +=  millis();
-    accelValue += ":";
-    accelValue += -32767;
-    accelValue +=  ":";
-    accelValue += -32767;
-    accelValue += ":";
-    accelValue += -32767;
+    accelValue += millis();
   }
 
-  // Convert the Arduino string to a char array
-  accelValue.toCharArray(ReplyBuffer, sizeof(ReplyBuffer));
-  Serial.println(ReplyBuffer);
+  Serial.println(accelValue);
 
   // Send it
   Udp.beginPacket(remIP, remPort);
-  Udp.write(ReplyBuffer);
+  Udp.write(accelValue.c_str());
   Udp.endPacket();
   delay(28);
 
