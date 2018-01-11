@@ -25,6 +25,8 @@
 
 // determines unit id, ip address, and mac address; valid range 1-154. use 100+ for spares with switches.
 // current spare unit is 100. second spare should be 101.
+// In the case of spare, UNIT_ID will be decoupled from SENSOR_DEVICE_ID eg mac and IP will not necessarily be related to UNIT_ID
+// that is sent with data
 #define SENSOR_DEVICE_ID 1
 
 #define waitTime (30)   // Set this for delay period in ms. As written, this is the minimum now
