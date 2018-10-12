@@ -70,7 +70,7 @@ boolean sens1present = 0;
 
 byte UNIT_ID = SENSOR_DEVICE_ID;  // set this for various pieces of exercise equipment, 1, 2, 3 currently valid
 byte mac[] = { 0x00, 0x01, 0x01, 0xAB, 0xCD, SENSOR_DEVICE_ID }; // 00:01:01:AB:CD:nn Mac address     - Spares n = 100+
-IPAddress myIP(10, 0, 2, 100 + SENSOR_DEVICE_ID ); // 10.0.2.[100+n] (e.g. .101, .102, .103). - Spares n = 100+
+IPAddress myIP(10, 0, 2, 200 + SENSOR_DEVICE_ID ); // 10.0.2.[100+n] (e.g. .101, .102, .103). - Spares n = 100+
 unsigned int localPort = 80;   // not used - local port to listen on
 
 // our local config blocked most UDP so we chose 80 (usually http)
@@ -96,6 +96,7 @@ boolean sensorStart = false;
 
 void setup() {
   Serial.begin(57600);
+  delay(1000);
 
   pinMode(3, INPUT_PULLUP);  // for three way switch on the spare
   pinMode(4, INPUT_PULLUP);
