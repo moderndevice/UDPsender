@@ -4,11 +4,11 @@
      Adafruit Unified Sensor
 
    Created By:
-     
+
      Paul Badger 2017
-   
+
    Description:
-     
+
      Reads an LIS3DH accelerometer and sends UDP data out to 255.255.255.255:35791
 
      One datagram = one sample, data is text, formatted as:
@@ -27,7 +27,8 @@
 // current spare unit is 100. second spare should be 101.
 // In the case of spare, UNIT_ID will be decoupled from SENSOR_DEVICE_ID eg mac and IP will not necessarily be related to UNIT_ID
 // that is sent with data
-#define SENSOR_DEVICE_ID 1
+#define SENSOR_DEVICE_ID 1  // This should change with particular box - especially is not Unit_ID selection switch.
+//                          // Reworked units (new connectors) all have unit selection switch        
 
 #define waitTime (30)   // Set this for delay period in ms. As written, this is the minimum now
 
@@ -70,7 +71,8 @@ boolean sens1present = 0;
 
 byte UNIT_ID = SENSOR_DEVICE_ID;  // set this for various pieces of exercise equipment, 1, 2, 3 currently valid
 byte mac[] = { 0x00, 0x01, 0x01, 0xAB, 0xCD, SENSOR_DEVICE_ID }; // 00:01:01:AB:CD:nn Mac address     - Spares n = 100+
-IPAddress myIP(10, 0, 2, 200 + SENSOR_DEVICE_ID ); // 10.0.2.[100+n] (e.g. .101, .102, .103). - Spares n = 100+
+IPAddress myIP(10, 0, 2, 100 + SENSOR_DEVICE_ID ); // 10.0.2.[100+n] (e.g. .101, .102, .103). - Spares n = 100+
+
 unsigned int localPort = 80;   // not used - local port to listen on
 
 // our local config blocked most UDP so we chose 80 (usually http)
@@ -95,6 +97,7 @@ int remPort = 35791;                 // agreed on email with Jason C
 boolean sensorStart = false;
 
 void setup() {
+
   Serial.begin(57600);
   delay(1000);
 
@@ -106,6 +109,10 @@ void setup() {
   if (!digitalRead(3)) UNIT_ID = 3; // if no switch present - no change in UNIT_ID
   else if (!digitalRead(4)) UNIT_ID = 2;
   else if (!digitalRead(7)) UNIT_ID = 1;
+
+  IPAddress temp(10, 0, 2, 100 + UNIT_ID);
+  mac[5] = UNIT_ID;  // set the last byte of mac according to the unit
+  myIP = temp;
 
   Serial.print("ID = ");
   Serial.println(UNIT_ID);
